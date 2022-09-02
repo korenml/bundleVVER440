@@ -8,12 +8,13 @@ Two variants are currently available
 * Singleregion mesh  
 <li>
 where each variant is evoked by region variable
-```
+```{r}
 region = 0; # multiregion
 region = 1; # coolant region
 region = 2; # cladding region
 region = 3; # fuel region
 ```
+
 ## OpenFOAM usage
 To convert mesh into the OpenFOAM use:
 
