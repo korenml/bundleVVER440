@@ -1,0 +1,4 @@
+# Generated mesh
+*.msh
+# swap
+*.geo.swp

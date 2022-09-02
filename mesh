@@ -1,0 +1,5 @@
+#!/bin/bash
+
+#/home/tomas/gmsh-4.10.5-Linux64/bin/gmsh VVERbundle.geo -3
+
+/home/tomas/gmsh-4.10.5-Linux64/bin/gmsh VVERbundle.geo -3 -nt 2
