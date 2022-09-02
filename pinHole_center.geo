@@ -50,20 +50,21 @@ Macro pinHole_center
 	Transfinite Line {lineCenterInter[1]} = nInterCenter;
 	Transfinite Line {lineCenterInter[2]} = nInterCenter;
 	Transfinite Line {lineCenterInter[3]} = nInterCenter;
-	
+
 	innerCenterLoops[0] = newl; Curve Loop(innerCenterLoops[0]) = {lineCenterInter[0],circPinCenterCout[0],-lineCenterInter[1],-circPinCenterCin[0]};
 	innerCenterLoops[1] = newl; Curve Loop(innerCenterLoops[1]) = {lineCenterInter[1],circPinCenterCout[1],-lineCenterInter[2],-circPinCenterCin[1]};
 	innerCenterLoops[2] = newl; Curve Loop(innerCenterLoops[2]) = {lineCenterInter[2],circPinCenterCout[2],-lineCenterInter[3],-circPinCenterCin[2]};
 	innerCenterLoops[3] = newl; Curve Loop(innerCenterLoops[3]) = {lineCenterInter[3],circPinCenterCout[3],-lineCenterInter[0],-circPinCenterCin[3]};
-	
+
+	innerCenterLoopsCool = newl; Curve Loop(innerCenterLoopsCool) = {circPinCenterCin[0],circPinCenterCin[1],circPinCenterCin[2],circPinCenterCin[3]};
+
 	For j In {0:3}
 		pinCenterSurf[j] = news; Surface(pinCenterSurf[j]) = {innerCenterLoops[j]};
 		Recombine Surface{pinCenterSurf[j]};
 		Transfinite Surface{pinCenterSurf[j]};
 	EndFor
 
-	pinCenterLoops = newl;
-	Curve Loop(pinCenterLoops) = {circPinCenterCout[0],circPinCenterCout[1],circPinCenterCout[2],circPinCenterCout[3]};
+	pinCenterLoops = newl;	Curve Loop(pinCenterLoops) = {circPinCenterCout[0],circPinCenterCout[1],circPinCenterCout[2],circPinCenterCout[3]};
 
 			
 	For j In {0:3}
@@ -72,26 +73,14 @@ Macro pinHole_center
 		 Layers{nZ};
 		 Recombine;
 		};
-		If (j == 0)
-			//Printf("Pin: %g", t);
-			//Physical Volume("cladding") += CentersurfaceVector[1];
-//			Physical Volume("fuel") = FsurfaceVector[1];	
-		Else
-			//Printf("Pin other: %g", t);
-			//Physical Volume("cladding") += CentersurfaceVector[1];
-//			Physical Volume("fuel") += FsurfaceVector[1];		
-		EndIf
 
-
-		
-		
-	/*
-	FtopSurface[j] = WsurfaceVector[0];
-	FvolumeFluid[j] = WsurfaceVector[1];
-	FcylinderSurface[j] = WsurfaceVector[5];
-	FhexSurface[j] = WsurfaceVector[3];
-	*/
-	
+		If ((region == 2) || (region == 0))
+			If ((j == 0))
+				Physical Volume("cladding") = CentersurfaceVector[1];
+			Else
+				Physical Volume("cladding") += CentersurfaceVector[1];
+			EndIf	
+		EndIf		
 	EndFor
 	
 Return

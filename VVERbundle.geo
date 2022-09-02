@@ -1,31 +1,45 @@
 //------------------------------------------
 // Name: VVER-440 fuel assembly
 // Autor: Tomas Korinek
-// Last update: 31.8.2022
+// Last update: 2.9.2022
+// Version: 3 - region type selection
+//			2 - physical surfaces and volumes added
+//			1 - basic 2D mesh for script debuging
 //------------------------------------------
 General.ExpertMode = 1;
 Mesh.Algorithm = 8;
 
-nFA = 126 - 1; // max 126
+region = 1;
 
+nFA = 126 - 1; // max 126 fuel pin, index start from 0
+
+// origin of fuel assembly
 origXFA = 0;
 origYFA = 0;
 
+// fuel pin pitch
 pitch = 1.2300 * 1e-2;
+
+// cladding outer diameter
 rCOut = 0.4575 * 1e-2;
+// cladding inner diameter
 rCIn  = 0.3945 * 1e-2;
+// fuel outer diameter
 rFOut = 0.3785 * 1e-2;
+// fuel inner diameter
 rFIn  = 0.0700 * 1e-2;
 
 rCenterOut = 0.515 * 1e-2;
 rCenterIn = 0.44 * 1e-2;
 
+// grid sizes
 lc1 = 0.0025;
 lc2 = 0.001;
 lcHole = 0.001;
 
 pi = 3.14159265359;
 
+// spacing for Transfinite
 nD4 = 8;
 nInterClad = 4; 
 nInterCenter = 4; 
@@ -34,21 +48,25 @@ nInterFuel = 10;
 nInterVoid = 2; 
 voidCirc = 0;
 
+//Boundary layer thickness
 ThickBL = 0.5e-3;
 
+// height
 zmax = 2.48;
+
+//number of axial layers
 nZ = 25;
 // Outer hexagonal shroud
 
 hexr = 0.5*14.7 * 1e-2;
 hexR = 2*hexr/Sqrt(3);
 
-hexP1 = newp; Point(hexP1) = {hexR,0,0,lc1};
-hexP2 = newp; Point(hexP2) = {hexR/2,hexr,0,lc1};
-hexP3 = newp; Point(hexP3) = {-hexR/2,hexr,0,lc1};
-hexP4 = newp; Point(hexP4) = {-hexR,0,0,lc1};
-hexP5 = newp; Point(hexP5) = {-hexR/2,-hexr,0,lc1};
-hexP6 = newp; Point(hexP6) = {hexR/2,-hexr,0,lc1};
+hexP1 = newp; Point(hexP1) = {origXFA + hexR, origYFA, 0, lc1};
+hexP2 = newp; Point(hexP2) = {origXFA + hexR/2, origYFA + hexr, 0, lc1};
+hexP3 = newp; Point(hexP3) = {origXFA - hexR/2, origYFA + hexr, 0, lc1};
+hexP4 = newp; Point(hexP4) = {origXFA - hexR, origYFA, 0, lc1};
+hexP5 = newp; Point(hexP5) = {origXFA - hexR/2, origYFA - hexr, 0, lc1};
+hexP6 = newp; Point(hexP6) = {origXFA + hexR/2, origYFA - hexr, 0, lc1};
 
 hexL1 = newll; Line(hexL1) = {hexP1,hexP2};
 hexL2 = newll; Line(hexL2) = {hexP2,hexP3};
@@ -83,12 +101,17 @@ EndFor
 Printf("Number of fuel pins: %g", t);
 
 // create center hole pin
-x = 0;
-y = 0;
+x = origXFA;
+y = origYFA;
 Call pinHole_center;
-
+Printf("Center pin");
+// Main coolant surface
 surfFAins = news; Plane Surface(surfFAins) = {curveFluid, pinCladLoops[],pinCenterLoops};
 Recombine Surface{surfFAins};
+
+// coolant in center hole
+surfCenter = news; Plane Surface(surfCenter) = {innerCenterLoopsCool};
+Recombine Surface{surfCenter};
 
 // Boundary layer for center pin
 Field[1000] = BoundaryLayer;
@@ -120,19 +143,36 @@ WsurfaceVector[]=Extrude {0, 0, zmax} {
  Recombine;
 };
 
-Physical Volume("coolant") = WsurfaceVector[1];
+// Extrude coolant center region
+WCsurfaceVector[]=Extrude {0, 0, zmax} {
+ Surface{surfCenter};
+ Layers{nZ};
+ Recombine;
+};
+
+If ((region == 1) || (region == 0))
+	Printf("Creating volume region for coolant.");
+	Physical Volume("coolant") = WsurfaceVector[1];
+	Physical Volume("coolant") += WCsurfaceVector[1];
+EndIf
+
 
 // first pin
 Physical Surface("zmin") = {24,25,26,27};
+
 Physical Surface("zmin") += {41, 42, 43, 44};
 Physical Surface("cladding_to_coolant") = {57,101,145,189};
+Physical Surface("cladding_to_fuel") = {65,109,153,197};
 Physical Surface("zmax") = {66,110,154,198};
 Physical Surface("zmax") += {88,132,176,220};
 
 //center pin 476
-Physical Surface("zmin") += {237+nFA*213,238+nFA*213,239+nFA*213,240+nFA*213};
-Physical Surface("zmax") += {263+nFA*213,285+nFA*213,307+nFA*213,329+nFA*213};
-Physical Surface("cladding_to_coolant") += {254+nFA*213,276+nFA*213,298+nFA*213,320+nFA*213};
+Physical Surface("zminCenter") = {332+nFA*213};
+Physical Surface("zmaxCenter") = {426+nFA*233};
+Physical Surface("zmin") += {238+nFA*213,239+nFA*213,240+nFA*213,241+nFA*213};
+Physical Surface("zmax") += {264+nFA*213,286+nFA*213,308+nFA*213,330+nFA*213};
+Physical Surface("cladding_to_coolant") += {255+nFA*213,277+nFA*213,299+nFA*213,321+nFA*213};
+Physical Surface("cladding_to_coolant") += {263+nFA*213,285+nFA*213,307+nFA*213,329+nFA*213};
 
 
 For j In {0:nFA}
@@ -142,18 +182,19 @@ For j In {0:nFA}
 		Physical Surface("zmax") += {66+i*44+j*213};
 		Physical Surface("zmax") += {88+i*44+j*213};
 		Physical Surface("cladding_to_coolant") += {57+i*44+j*213};
+		Physical Surface("cladding_to_fuel") += {65+i*44+j*213};
 	
 	EndFor
 EndFor
-Physical Surface("zmin") += {330 +nFA*213};
-Physical Surface("zmax") += {402 +nFA*233};
+Physical Surface("zmin") += {331 +nFA*213};
+Physical Surface("zmax") += {404 +nFA*233};
 
-Physical Surface("xmaxR") = {349 +nFA*217};
-Physical Surface("ymax") = {353 +nFA*217};
-Physical Surface("xmaxL") = {357 +nFA*217};
-Physical Surface("xminL") = {361 +nFA*217};
-Physical Surface("ymin") = {365 +nFA*217};
-Physical Surface("xminR") = {369 +nFA*217};
+Physical Surface("xmaxR") = {351 +nFA*217};
+Physical Surface("ymax") = {355 +nFA*217};
+Physical Surface("xmaxL") = {359 +nFA*217};
+Physical Surface("xminL") = {363 +nFA*217};
+Physical Surface("ymin") = {367 +nFA*217};
+Physical Surface("xminR") = {371 +nFA*217};
 /*
 Mesh.Algorithm = 6;
 MeshAlgorithm Surface {1} = 1;

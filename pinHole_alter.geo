@@ -1,9 +1,10 @@
 //------------------------------------------
-// Name: Simple pinHole
+// Name: Simple pinHole macro
 // Autor: Tomas Korinek
-// Date: 3.2.2022
-// version: 2 - fuel, cladding, void included
-//			1-  simple hole
+// Last update: 2.9.2022
+// version:	3 - physical volumes added
+//			2 - fuel, cladding
+//			1 - simple hole
 //------------------------------------------
 
 Macro pinHole
@@ -98,16 +99,18 @@ Macro pinHole
 		Recombine Surface{pinFuelSurf[j]};
 		Transfinite Surface{pinFuelSurf[j]};
 	EndFor	
+	
+	// Creation of boundary layer
 	Field[t] = BoundaryLayer;
 	Field[t].CurvesList = {circPinCout[]};
 	Field[t].ExcludedSurfacesList = {pinCladSurf[]};
 	Field[t].NbLayers = 4;
 	Field[t].Size = 1e-4;
-	//Field[t].SizeFar = 5e-4;
 	Field[t].Ratio = 1.2;
 	Field[t].Thickness = ThickBL;
-
 	BoundaryLayer Field = t;
+	
+	// Loop over surfaces
 	For j In {0:3}
 		CsurfaceVector[]=Extrude {0, 0, zmax} {
 		 Surface{pinCladSurf[j]};
@@ -119,25 +122,22 @@ Macro pinHole
 		 Layers{nZ};
 		 Recombine;
 		};
-		If ((t == 0) && (j == 0))
-			//Printf("Pin: %g", t);
-			//Physical Volume("cladding") = CsurfaceVector[1];
-//			Physical Volume("fuel") = FsurfaceVector[1];	
-		Else
-			//Printf("Pin other: %g", t);
-			//Physical Volume("cladding") += CsurfaceVector[1];
-//			Physical Volume("fuel") += FsurfaceVector[1];		
+		
+		If ((region == 2) || (region == 0)) 
+			If ((t == 0) && (j == 0))
+				Physical Volume("cladding") = CsurfaceVector[1];
+			Else			
+				Physical Volume("cladding") += CsurfaceVector[1];
+			EndIf
 		EndIf
-
-
 		
-		
-	/*
-	FtopSurface[j] = WsurfaceVector[0];
-	FvolumeFluid[j] = WsurfaceVector[1];
-	FcylinderSurface[j] = WsurfaceVector[5];
-	FhexSurface[j] = WsurfaceVector[3];
-	*/
+		If ((region == 3) || (region == 0))
+			If ((t == 0) && (j == 0))
+				Physical Volume("fuel") = FsurfaceVector[1];	
+			Else
+				Physical Volume("fuel") += FsurfaceVector[1];		
+			EndIf
+		EndIf
 	
 	EndFor
 	
