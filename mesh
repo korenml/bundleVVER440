@@ -2,4 +2,4 @@
 
 #/home/tomas/gmsh-4.10.5-Linux64/bin/gmsh VVERbundle.geo -3
 
-/home/tomas/gmsh-4.10.5-Linux64/bin/gmsh VVERbundle.geo
+/home/tomas/gmsh-4.10.5-Linux64/bin/gmsh -nt 14 -3 VVERbundle.geo

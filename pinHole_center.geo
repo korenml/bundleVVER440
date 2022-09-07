@@ -75,11 +75,7 @@ Macro pinHole_center
 		};
 
 		If ((region == 2) || (region == 0))
-			If ((j == 0))
-				Physical Volume("cladding") = CentersurfaceVector[1];
-			Else
 				Physical Volume("cladding") += CentersurfaceVector[1];
-			EndIf	
 		EndIf		
 	EndFor
 	
